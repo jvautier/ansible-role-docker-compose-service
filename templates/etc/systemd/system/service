@@ -1,0 +1,23 @@
+[Unit]
+Description={{ docker_compose_service_name }} Service
+After=network.service docker.service
+Requires=docker.service
+
+[Service]
+Restart=always
+RestartSec=10
+TimeoutSec=2400
+RemainAfterExit=yes
+
+WorkingDirectory={{ docker_compose_service_working_directory }}
+
+ExecStartPre=/usr/bin/env docker-compose -p systemd_{{ docker_compose_service_name }} down -v
+ExecStart=/usr/bin/env docker-compose -p systemd_{{ docker_compose_service_name }} up --no-build -d
+
+ExecStop=/usr/bin/env docker-compose -p systemd_{{ docker_compose_service_name }} down
+
+ExecReload=/usr/bin/env docker-compose -p systemd_{{ docker_compose_service_name }} pull --quiet
+ExecReload=/usr/bin/env docker-compose -p systemd_{{ docker_compose_service_name }} up --no-build -d
+
+[Install]
+WantedBy=multi-user.target

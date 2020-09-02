@@ -1,0 +1,82 @@
+---
+# tasks file for boxes.docker-compose-service
+- name: Install
+  when: docker_compose_service_action == "install"
+  block:
+    - name: Ensure directory exists
+      when: docker_compose_file_path is defined and docker_compose_file_path != ''
+      file:
+        path: "/opt/docker-compose-service-{{ docker_compose_service_name }}/"
+        state: directory
+        recurse: true
+
+    - name: Copy docker-compose.ym
+      when: docker_compose_env_file_path is defined and docker_compose_env_file_path != ''
+      copy:
+        src: "{{ docker_compose_env_file_path }}"
+        dest: "/opt/docker-compose-service-{{ docker_compose_service_name }}/.env"
+
+    - name: Copy .env
+      when: docker_compose_file_path is defined and docker_compose_file_path != ''
+      copy:
+        src: "{{ docker_compose_file_path }}"
+        dest: "/opt/docker-compose-service-{{ docker_compose_service_name }}//docker-compose.yml"
+
+    - name: Set docker_compose_service_working_directory variable
+      when: docker_compose_file_path is defined and docker_compose_file_path != ''
+      set_fact:
+        docker_compose_service_working_directory: "/opt/docker-compose-service-{{ docker_compose_service_name }}/"
+
+    - name: Service template
+      template:
+        src: etc/systemd/system/service
+        dest: "/etc/systemd/system/{{ docker_compose_service_name }}.docker-compose.service"
+
+    - name: Binary template
+      template:
+        src: usr/bin/service
+        dest: "/usr/bin/{{ docker_compose_service_name }}.docker-compose.service"
+        mode: a+x
+
+    - name: Enable service {{ docker_compose_service_name }}.docker-compose.service
+      service:
+        name: "{{ docker_compose_service_name }}.docker-compose.service"
+        enabled: "{{ docker_compose_service_enabled | bool }}"
+        state: "{{ docker_compose_service_state }}"
+
+- name: Uninstall
+  when: docker_compose_service_action == "uninstall"
+  block:
+    - name: Check if Service Exists
+      stat:
+        path: "/etc/systemd/system/{{ docker_compose_service_name }}.docker-compose.service"
+      register: service_status
+
+    - name: Disable and stop service {{ docker_compose_service_name }}.docker-compose.service
+      when: service_status.stat.exists
+      service:
+        name: "{{ docker_compose_service_name }}.docker-compose.service"
+        enabled: false
+        state: stopped
+
+    - name: Delete Service template
+      file:
+        path: "/etc/systemd/system/{{ docker_compose_service_name }}.docker-compose.service"
+        state: absent
+
+    - name: Delete Binary template
+      file:
+        path: "/usr/bin/{{ docker_compose_service_name }}.docker-compose.service"
+        state: absent
+
+    - name: File only
+      when: docker_compose_file_path is defined and docker_compose_file_path != ''
+      file:
+        path: "/opt/docker-compose-service-{{ docker_compose_service_name }}/docker-compose.yml"
+        state: absent
+
+    - name: File only
+      when: docker_compose_file_path is defined and docker_compose_file_path != ''
+      file:
+        path: "/opt/docker-compose-service-{{ docker_compose_service_name }}/"
+        state: absent

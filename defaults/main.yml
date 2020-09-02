@@ -1,0 +1,5 @@
+---
+# defaults file for boxes.docker-compose-service
+docker_compose_service_enabled: true
+docker_compose_service_state: started
+docker_compose_service_action: install

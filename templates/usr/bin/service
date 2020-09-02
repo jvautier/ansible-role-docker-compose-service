@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -eu
+cd {{ docker_compose_service_working_directory }}
+docker-compose -p systemd_{{ docker_compose_service_name }} $@
