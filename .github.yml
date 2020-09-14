@@ -1,0 +1,9 @@
+---
+fullname: jvautier/ansible-role-docker-compose-service
+description: Install a docker-compose as a service through ansible
+tags:
+  - ansible
+  - ansible-role
+  - docker
+  - docker-compose
+github: {}
